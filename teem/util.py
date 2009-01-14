@@ -64,6 +64,7 @@ def new_simple_class(struct_name,
                      base_class=None,
                      dtor=None,
                      skip_prefixes=[],
+                     extra_methods=[],
                      skip_methods=[],
                      permute={}):
     if _verbose:
@@ -78,8 +79,25 @@ def new_simple_class(struct_name,
     else:
         basename = prefix
 
+    def make_func(name,permutation=None):
+        apientry = getattr(capi, name)
+        def func(*args):
+            newargs = list(x if not isinstance(x, TeemObjectBase)
+                           else x._ctypesobj
+                           for x, reqtype in zip(args, apientry.argtypes))
+            if permutation:
+                newargs = list(newargs[i] for i in permutation)
+            try:
+                return apientry(*newargs)
+            except ArgumentError:
+                print "args passed", newargs
+                print "types passed", list(type(x) for x in newargs)
+                print "args required", apientry.argtypes
+                raise
+        return func
+
     # "methods"
-    for name in dir(capi):
+    for name, apientry in capi.__dict__.iteritems():
         skip = False
         for skip_prefix in skip_prefixes:
             if name.startswith(skip_prefix):
@@ -91,32 +109,19 @@ def new_simple_class(struct_name,
             continue
         if name.startswith(basename):
             funcname = name[len(basename):]
-            apientry = getattr(capi, name)
             if (funcname in ['Nix', 'New', 'Nuke', 'Copy'] or
                 funcname in skip_methods or
                 not isinstance(apientry, ctypes._CFuncPtr)):
                 # if _verbose:
                 #     print "    Skipping method (?)", funcname
                 continue
-            def make_func(name,permutation=None):
-                apientry = getattr(capi, name)
-                def func(*args):
-                    newargs = list(x if not isinstance(x, TeemObjectBase)
-                                   else x._ctypesobj
-                                   for x, reqtype in zip(args, apientry.argtypes))
-                    if permutation:
-                        newargs = list(newargs[i] for i in permutation)
-                    try:
-                        return apientry(*newargs)
-                    except ArgumentError:
-                        print "args passed", newargs
-                        print "types passed", list(type(x) for x in newargs)
-                        print "args required", apientry.argtypes
-                        raise
-                return func
             if _verbose:
                 print "    New method:", funcname, apientry
             setattr(new_class, funcname, make_func(name, permute.get(funcname, None)))
+
+    for name, funcname in extra_methods:
+        apientry = getattr(capi, name)
+        setattr(new_class, funcname, make_func(name, permute.get(funcname, None)))
 
     # "fields"
     for fieldname, typ in struct._fields_:

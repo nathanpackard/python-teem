@@ -28,7 +28,8 @@ Type = NrrdEnum()
 Measure = NrrdEnum()
 Boundary = NrrdEnum()
 Format = NrrdEnum()
-Encoding = NrrdEnum()
+Encoding = NrrdEnum() # This is not really an enum
+EncodingType = NrrdEnum()
 Kernel = NrrdEnum()
 Center = NrrdEnum()
 BasicInfo = NrrdEnum()
@@ -37,53 +38,24 @@ BinaryOp = NrrdEnum()
 TernaryOp = NrrdEnum()
 
 ##############################################################################
-# FIXME: refactor this - it's just too ugly
 
-for name in dir(capi):
-    if name.startswith('nrrdType'):
-        v = getattr(capi, name)
-        if not isinstance(v, ctypes._CFuncPtr):
-            setattr(Type, name[len('nrrdType'):], v)
-    elif name.startswith('nrrdMeasure'):
-        v = getattr(capi, name)
-        if not isinstance(v, ctypes._CFuncPtr):
-            setattr(Measure, name[len('nrrdMeasure'):], v)
-    elif name.startswith('nrrdBoundary'):
-        v = getattr(capi, name)
-        if not isinstance(v, ctypes._CFuncPtr):
-            setattr(Boundary, name[len('nrrdBoundary'):], v)
-    elif name.startswith('nrrdFormat'):
-        v = getattr(capi, name)
-        if not isinstance(v, ctypes._CFuncPtr):
-            setattr(Format, name[len('nrrdFormat'):], v)
-    elif name.startswith('nrrdEncoding'):
-        v = getattr(capi, name)
-        if not isinstance(v, ctypes._CFuncPtr):
-            setattr(Encoding, name[len('nrrdEncoding'):], v)
-    elif name.startswith('nrrdKernel'):
-        v = getattr(capi, name)
-        if not isinstance(v, ctypes._CFuncPtr):
-            setattr(Kernel, name[len('nrrdKernel'):], v)
-    elif name.startswith('nrrdCenter'):
-        v = getattr(capi, name)
-        if not isinstance(v, ctypes._CFuncPtr):
-            setattr(Center, name[len('nrrdCenter'):], v)
-    elif name.startswith('nrrdBasicInfo'):
-        v = getattr(capi, name)
-        if not isinstance(v, ctypes._CFuncPtr):
-            setattr(BasicInfo, name[len('nrrdBasicInfo'):], v)
-    elif name.startswith('nrrdBinaryOp'):
-        v = getattr(capi, name)
-        if not isinstance(v, ctypes._CFuncPtr):
-            setattr(BinaryOp, name[len('nrrdBinaryOp'):], v)
-    elif name.startswith('nrrdTernaryOp'):
-        v = getattr(capi, name)
-        if not isinstance(v, ctypes._CFuncPtr):
-            setattr(TernaryOp, name[len('nrrdTernaryOp'):], v)
-    elif name.startswith('nrrdUnaryOp'):
-        v = getattr(capi, name)
-        if not isinstance(v, ctypes._CFuncPtr):
-            setattr(UnaryOp, name[len('nrrdUnaryOp'):], v)
+for name,v in capi.__dict__.iteritems():
+    for prefix, enum in [('nrrdType', Type),
+                         ('nrrdMeasure', Measure),
+                         ('nrrdBoundary', Boundary),
+                         ('nrrdFormat', Format),
+                         ('nrrdEncodingType', EncodingType),
+                         ('nrrdEncoding', Encoding),
+                         ('nrrdKernel', Kernel),
+                         ('nrrdCenter', Center),
+                         ('nrrdBasicInfo', BasicInfo),
+                         ('nrrdUnaryOp', UnaryOp),
+                         ('nrrdBinaryOp', BinaryOp),
+                         ('nrrdTernaryOp', TernaryOp),
+                         ]:
+        if (name.startswith(prefix) and
+            not isinstance(v, ctypes._CFuncPtr)):
+            setattr(enum, name[len(prefix):], v)
 
 ##############################################################################
 # Utility
@@ -106,7 +78,7 @@ def nrrd_fun_make_new_nrrd(nrrd_fun):
 ##############################################################################
 # NrrdRange
 
-NrrdRangeBase = util.new_simple_class('NrrdRange', skip_methods='NewSet')
+NrrdRangeBase = util.new_simple_class('NrrdRange', skip_methods=['NewSet'])
 
 # NrrdRange is for things that are created on the Python side of the
 # Python-C boundary
@@ -219,7 +191,6 @@ Nrrd = util.new_simple_class('Nrrd',
                              skip_methods=['PPM', 'PGM'],
                              permute={'Save': [1, 0, 2]})
 
-##############################################################################
 # FIXME: should be put these functions somewhere else?
 
 for name, apientry in capi.__dict__.iteritems():
@@ -244,6 +215,13 @@ class NrrdC(Nrrd):
     def __init__(self, ctypesobj, will_own_data=False):
         self._ctypesobj = ctypesobj
         self._own_data = will_own_data
+
+##############################################################################
+# NrrdIostate
+
+NrrdIoState = util.new_simple_class('NrrdIoState',
+                                    make_ctor=True)
+
 
 ##############################################################################
 
