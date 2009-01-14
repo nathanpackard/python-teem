@@ -225,3 +225,85 @@ airTypeStr = ((ctypes.c_char * (AIR_TYPE_MAX+1)) * AIR_STRLEN_SMALL).in_dll(libt
 airTypeSize = (ctypes.c_size_t * (AIR_TYPE_MAX+1)).in_dll(libteem, 'airTypeSize')
 airDisableDio = ctypes.c_int.in_dll(libteem, 'airMyDio')
 
+##############################################################################
+# deal with teem functions that return freshly allocated strings
+
+from ctypes.util import find_library
+libc = ctypes.cdll.LoadLibrary(find_library('c'))
+
+def string_nixer(result, *args):
+    if result:
+        s = ctypes.string_at(result)
+        libc.free(result)
+        return s
+    else:
+        return ''
+
+def string_nixerify(f):
+    f.errcheck = string_nixer
+    f.restype = ctypes.c_void_p
+
+for f in [biffGetDone, biffGet, nrrdKeyValueGet, nrrdIterContent]:
+    string_nixerify(f)
+
+##############################################################################
+# Biff-related
+
+class BiffException(Exception):
+    pass
+
+def make_biff_checker(library_identifier):
+    def biff_checker(result, *args):
+        if result <> 0:
+            msg = biffGetDone(library_identifier)
+            raise BiffException(msg)
+        return result
+    return biff_checker
+
+nrrd_biff_checker = make_biff_checker(NRRD)
+gage_biff_checker = make_biff_checker(GAGE)
+limn_biff_checker = make_biff_checker(LIMN)
+mite_biff_checker = make_biff_checker(MITE)
+
+def _guess_biff_checker(fname):
+    if fname.startswith('nrrd'):
+        return nrrd_biff_checker
+    elif fname.startswith('gage'):
+        return gage_biff_checker
+    elif fname.startswith('limn'):
+        return limn_biff_checker
+    elif fname.startswith('mite'):
+        return mite_biff_checker
+    else:
+        return None
+
+__no_biff = set([
+    'airIsNaN',
+    'airIsInf_f',
+    'airIsInf_d',
+    'gageProbe',
+    'gageStackProbe',
+    'gageProbeSpace',
+    'gageStackProbeSpace',
+    'gageKindTotalAnswerLength',
+    'gageKindAnswerLength',
+    'gageKindAnswerOffset',
+    'gagePerVolumeIsAttached',
+    'nrrdKindIsDomain'])
+
+__l = locals().items()
+ftype = type(nrrdNew)
+for f_name, f_value in __l:
+    if type(f_value) == ftype:
+        if (f_value.restype == ctypes.c_int and
+            f_name not in __no_biff):
+            v = _guess_biff_checker(f_name)
+            if v:
+                f_value.errcheck = v
+
+##############################################################################
+# Give teem FILE pointers
+
+def from_file(f):
+    return ctypes.cast(ctypes.pythonapi.PyFile_AsFile(ctypes.py_object(f)),
+                       ctypes.POINTER(FILE))
