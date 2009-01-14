@@ -61,8 +61,8 @@ AIR_32BIT = (airMy32Bit)
 #BANE_PARM_NUM = 5
 BIFF_STRLEN = (256+1) 
 BIFF_MAXKEYLEN = 128
-#DYE = dyeBiffKey
-#DYE_MAX_SPACE = 6
+DYE = dyeBiffKey
+DYE_MAX_SPACE = 6
 #ECHO = echoBiffKey
 #ECHO_POS_FLOAT = 1
 #ECHO_POS_FLOAT = 0
@@ -264,6 +264,7 @@ nrrd_biff_checker = make_biff_checker(NRRD)
 gage_biff_checker = make_biff_checker(GAGE)
 limn_biff_checker = make_biff_checker(LIMN)
 mite_biff_checker = make_biff_checker(MITE)
+dye_biff_checker = make_biff_checker(DYE)
 
 def _guess_biff_checker(fname):
     if fname.startswith('nrrd'):
@@ -274,6 +275,8 @@ def _guess_biff_checker(fname):
         return limn_biff_checker
     elif fname.startswith('mite'):
         return mite_biff_checker
+    elif fname.startswith('dye'):
+        return dye_biff_checker
     else:
         return None
 
@@ -289,7 +292,11 @@ __no_biff = set([
     'gageKindAnswerLength',
     'gageKindAnswerOffset',
     'gagePerVolumeIsAttached',
-    'nrrdKindIsDomain'])
+    'nrrdKindIsDomain',
+    'dyeStrToSpace',
+    'dyeColorGet',
+    'dyeColorGetAs',
+    ])
 
 __l = locals().items()
 ftype = type(nrrdNew)

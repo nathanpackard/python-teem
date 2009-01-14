@@ -18,9 +18,8 @@ class TenEnum(object): pass
 
 Aniso = TenEnum()
 
-for name in dir(capi):
+for name, v in capi.__dict__.iteritems():
     if name.startswith('tenAniso'):
-        v = getattr(capi, name)
         if not isinstance(v, ctypes._CFuncPtr):
             shortname = name[len('tenAniso'):]
             if shortname.startswith('_'):

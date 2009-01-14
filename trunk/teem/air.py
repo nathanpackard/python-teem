@@ -29,5 +29,3 @@ Bool = EnumC(capi.airBool)
 ##############################################################################
 
 class _AirEnum(object): pass
-
-Insane

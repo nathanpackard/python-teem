@@ -1,5 +1,9 @@
 2009-01-14  Carlos Scheidegger  <cscheid@abulafia>
 
+	* dye.py: basic support for dye
+
+	* nrrd.py: Distinguish between NrrdEncoding and NrrdEncodingType
+
 	* teem: capi.from_file(file('foo')), to give teem functions a
 	file pointer.
 
