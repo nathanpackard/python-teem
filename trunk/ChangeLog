@@ -1,0 +1,7 @@
+2009-01-14  Carlos Scheidegger  <cscheid@abulafia>
+
+	* teem: capi.from_file(file('foo')), to give teem functions a
+	file pointer.
+
+	* teem: added exception-based biff checking
+
