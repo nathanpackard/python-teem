@@ -25,25 +25,43 @@ Type = NrrdEnum()
 # FIXME: nrrdTypeIsIntegral, nrrdTypeIsUnsigned are not accessible
 # because array has no bounds declared
 
-Measure = NrrdEnum()
+IoState = NrrdEnum()
+FormatType = NrrdEnum()
 Boundary = NrrdEnum()
-Format = NrrdEnum()
-Encoding = NrrdEnum() # This is not really an enum
+Type = NrrdEnum()
 EncodingType = NrrdEnum()
-Kernel = NrrdEnum()
+ZlibStrategy = NrrdEnum()
 Center = NrrdEnum()
+Kind = NrrdEnum()
+# NB: many Kinds (say, 4Color) are not accessible via dot notation
+#   Kind.4Color is a syntax error, so use Kind._4Color
+AxisInfo = NrrdEnum()
 BasicInfo = NrrdEnum()
+# FIXME Endian
+Field = NrrdEnum()
+HasNonExist = NrrdEnum()
+Space = NrrdEnum()
+SpacingStatus = NrrdEnum()
+OriginStatus = NrrdEnum()
+Measure = NrrdEnum()
+Blind8BitRange = NrrdEnum()
 UnaryOp = NrrdEnum()
 BinaryOp = NrrdEnum()
 TernaryOp = NrrdEnum()
 
+Encoding = NrrdEnum() # This is not really an enum, members are nrrdEncodings
+Kernel = NrrdEnum() # This is not really an enum, members are nrrdKernels
+
 ##############################################################################
+
+# Any reason nrrdField enums are nrrdField_unknown when others are
+# nrrdFieldUnknown?
 
 for name,v in capi.__dict__.iteritems():
     for prefix, enum in [('nrrdType', Type),
                          ('nrrdMeasure', Measure),
                          ('nrrdBoundary', Boundary),
-                         ('nrrdFormat', Format),
+                         ('nrrdFormatType', FormatType),
                          ('nrrdEncodingType', EncodingType),
                          ('nrrdEncoding', Encoding),
                          ('nrrdKernel', Kernel),
@@ -52,10 +70,31 @@ for name,v in capi.__dict__.iteritems():
                          ('nrrdUnaryOp', UnaryOp),
                          ('nrrdBinaryOp', BinaryOp),
                          ('nrrdTernaryOp', TernaryOp),
+                         ('nrrdTernaryOp', TernaryOp),
+                         ('nrrdField_', Field),
+                         ('nrrdHasNonExist', HasNonExist),
+                         ('nrrdSpace', Space),
+                         ('nrrdSpacingStatus', SpacingStatus),
+                         ('nrrdOriginStatus', OriginStatus),
+                         ('nrrdBlind8BitRange', Blind8BitRange),
+                         ('nrrdIoState', IoState),
+                         ('nrrdZlibStrategy', ZlibStrategy),
+                         ('nrrdKind', Kind),
+                         ('nrrdAxisInfo', AxisInfo),
                          ]:
         if (name.startswith(prefix) and
             not isinstance(v, ctypes._CFuncPtr)):
-            setattr(enum, name[len(prefix):], v)
+            # hack for Kind.4Color and friends
+            try:
+                test = name[len(prefix)] in "1234567890"
+            except IndexError:
+                test = False
+            if test:
+                n = '_' + name[len(prefix):]
+                setattr(enum, n, v)
+            else:
+                setattr(enum, name[len(prefix):], v)
+                
 
 ##############################################################################
 # Utility
