@@ -1,5 +1,7 @@
 2009-01-14  Carlos Scheidegger  <cscheid@abulafia>
 
+	* nrrd.py: completed nrrdEnums.h
+
 	* dye.py: basic support for dye
 
 	* nrrd.py: Distinguish between NrrdEncoding and NrrdEncodingType
